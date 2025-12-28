@@ -102,7 +102,7 @@ export default function SignupCard() {
   };
 
   return (
-    <div className="min-h-screen flex-row items-center justify-center p-4">
+    <div className="min-h-screen flex-column items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="text-center mb-8">
