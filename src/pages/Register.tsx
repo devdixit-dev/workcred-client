@@ -26,6 +26,13 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const data = {
+      companyName, companyContact, gstNumber, companyType,
+      contactPersonName, email, password
+    }
+
+    console.log(data);
+
     if (password !== confirmPassword) {
       toast({
         title: 'Password Mismatch',
@@ -35,10 +42,10 @@ export default function Register() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: 'Weak Password',
-        description: 'Password must be at least 6 characters.',
+        description: 'Password must be at least 8 characters.',
         variant: 'destructive',
       });
       return;
@@ -46,7 +53,7 @@ export default function Register() {
 
     setIsLoading(true);
 
-    const result = await registerCompany(companyName, email, password);
+    const result = await registerCompany(companyName, companyContact, gstNumber, companyType, contactPersonName, email, password)
 
     if (result.success) {
       toast({
@@ -74,7 +81,7 @@ export default function Register() {
             <Building2 className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Register Company</h1>
-          <p className="text-muted-foreground mt-1">Create your HR Portal account</p>
+          <p className="text-muted-foreground mt-1">Create your HR account</p>
         </div>
 
         {/* Registration Form */}
@@ -101,12 +108,12 @@ export default function Register() {
                     <SelectValue placeholder="Select company type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="private-limited">Private Limited</SelectItem>
-                    <SelectItem value="public-limited">Public Limited</SelectItem>
-                    <SelectItem value="partnership">Partnership</SelectItem>
-                    <SelectItem value="sole-proprietorship">Sole Proprietorship</SelectItem>
-                    <SelectItem value="llp">LLP</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="Private Limited">Private Limited</SelectItem>
+                    <SelectItem value="Public Limited">Public Limited</SelectItem>
+                    <SelectItem value="Partnership">Partnership</SelectItem>
+                    <SelectItem value="Sole-proprietorship">Sole Proprietorship</SelectItem>
+                    <SelectItem value="LLP">LLP</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

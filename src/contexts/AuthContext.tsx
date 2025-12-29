@@ -1,3 +1,4 @@
+import api from '@/api/axios.api';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
@@ -33,7 +34,17 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   pendingEmail: string | null;
-  registerCompany: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+
+  registerCompany: (
+    companyName: string,
+    companyContact: string, 
+    gstNumber: string, 
+    companyType: string, 
+    contactPersonName: string,
+    email: string, 
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+
   loginCompany: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOtp?: boolean }>;
   loginEmployee: (employeeId: string, password: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -43,6 +54,7 @@ interface AuthContextType {
 }
 
 interface OnboardingData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   employees?: any[];
   workingHours?: { start: string; end: string };
   companyDetails?: { logo: string; website: string };
@@ -92,30 +104,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const registerCompany = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  const registerCompany = async (
+    companyName: string,
+    companyContact: string, 
+    gstNumber: string, 
+    companyType: string, 
+    contactPersonName: string,
+    email: string, 
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    
+    const res = await api.post('/auth/init',
+      {
+        companyName, companyType, companyGSTnumber: gstNumber, companyAdmin: contactPersonName,
+        companyContact, companyEmail: email, companyPassword: password
+      },
+      { withCredentials: true }
+    );
 
-    const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
-    const exists = [...DEMO_COMPANIES, ...registeredCompanies].some((c) => c.email === email);
+    console.log(await res.data);
 
-    if (exists) {
-      return { success: false, error: 'Email already registered' };
-    }
+    
 
-    const newCompany: Company = {
-      id: `company-${Date.now()}`,
-      name,
-      email,
-      workingHours: { start: '09:00', end: '18:00' },
-      isOnboarded: false,
-    };
+    // companyName, companyType, companyGSTnumber, companyAdmin,
+      // companyContact, companyEmail, companyPassword
 
-    registeredCompanies.push({ ...newCompany, password });
-    localStorage.setItem('hr-portal-companies', JSON.stringify(registeredCompanies));
+    // const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
+    // const exists = [...DEMO_COMPANIES, ...registeredCompanies].some((c) => c.email === email);
 
-    setPendingEmail(email);
-    setPendingUser({ id: newCompany.id, email, name, role: 'admin' });
-    setPendingCompany(newCompany);
+    // if (exists) {
+    //   return { success: false, error: 'Email already registered' };
+    // }
+
+    // const newCompany: Company = {
+    //   id: `company-${Date.now()}`,
+    //   name,
+    //   email,
+    //   workingHours: { start: '09:00', end: '18:00' },
+    //   isOnboarded: false,
+    // };
+
+    // registeredCompanies.push({ ...newCompany, password });
+    // localStorage.setItem('hr-portal-companies', JSON.stringify(registeredCompanies));
+
+    // setPendingEmail(email);
+    // setPendingUser({ id: newCompany.id, email, name, role: 'admin' });
+    // setPendingCompany(newCompany);
 
     return { success: true };
   };
@@ -237,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Update company
     const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updatedCompanies = registeredCompanies.map((c: any) =>
       c.id === company.id ? { ...c, ...updatedCompany } : c
     );
@@ -286,6 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
