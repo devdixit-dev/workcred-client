@@ -1,5 +1,6 @@
 import api from '@/api/axios.api';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -37,17 +38,17 @@ interface AuthContextType {
 
   registerCompany: (
     companyName: string,
-    companyContact: string, 
-    gstNumber: string, 
-    companyType: string, 
+    companyContact: string,
+    gstNumber: string,
+    companyType: string,
     contactPersonName: string,
-    email: string, 
+    email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
 
   loginCompany: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOtp?: boolean }>;
   loginEmployee: (employeeId: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  verifyOtp: (otp: string) => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (otp: string) => Promise<{ success: boolean; message: string; error?: string }>;
   completeOnboarding: (data: OnboardingData) => void;
   updateProfile: (data: Partial<User>) => void;
   logout: () => void;
@@ -64,10 +65,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Demo credentials
 const DEMO_COMPANIES = [
-  { 
-    id: 'company-1', 
-    email: 'admin@techcorp.com', 
-    password: 'admin123', 
+  {
+    id: 'company-1',
+    email: 'admin@techcorp.com',
+    password: 'admin123',
     name: 'TechCorp Solutions',
     logo: '',
     website: 'https://techcorp.com',
@@ -106,14 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerCompany = async (
     companyName: string,
-    companyContact: string, 
-    gstNumber: string, 
-    companyType: string, 
+    companyContact: string,
+    gstNumber: string,
+    companyType: string,
     contactPersonName: string,
-    email: string, 
+    email: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
-    
+
     const res = await api.post('/auth/init',
       {
         companyName, companyType, companyGSTnumber: gstNumber, companyAdmin: contactPersonName,
@@ -121,35 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       { withCredentials: true }
     );
-
-    console.log(await res.data);
-
-    
-
-    // companyName, companyType, companyGSTnumber, companyAdmin,
-      // companyContact, companyEmail, companyPassword
-
-    // const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
-    // const exists = [...DEMO_COMPANIES, ...registeredCompanies].some((c) => c.email === email);
-
-    // if (exists) {
-    //   return { success: false, error: 'Email already registered' };
-    // }
-
-    // const newCompany: Company = {
-    //   id: `company-${Date.now()}`,
-    //   name,
-    //   email,
-    //   workingHours: { start: '09:00', end: '18:00' },
-    //   isOnboarded: false,
-    // };
-
-    // registeredCompanies.push({ ...newCompany, password });
-    // localStorage.setItem('hr-portal-companies', JSON.stringify(registeredCompanies));
-
-    // setPendingEmail(email);
-    // setPendingUser({ id: newCompany.id, email, name, role: 'admin' });
-    // setPendingCompany(newCompany);
 
     return { success: true };
   };
@@ -187,11 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const employee = allEmployees.find((e) => e.employeeId === employeeId && e.password === password);
 
     if (employee) {
-      const userData: User = { 
-        id: employee.id, 
-        email: employee.email || '', 
-        name: employee.name, 
-        role: 'employee', 
+      const userData: User = {
+        id: employee.id,
+        email: employee.email || '',
+        name: employee.name,
+        role: 'employee',
         companyId: employee.companyId,
         employeeId: employee.employeeId,
         department: employee.department,
@@ -200,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(userData);
       localStorage.setItem('hr-portal-user', JSON.stringify(userData));
-      
+
       // Load company data for employee
       const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
       const allCompanies = [...DEMO_COMPANIES, ...registeredCompanies];
@@ -218,28 +190,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCompany(companyInfo);
         localStorage.setItem('hr-portal-company', JSON.stringify(companyInfo));
       }
-      
+
       return { success: true };
     }
 
     return { success: false, error: 'Invalid Employee ID or password' };
   };
 
-  const verifyOtp = async (otp: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  const verifyOtp = async (otp: string): Promise<{ success: boolean; message: string; error?: string }> => {
+    const res = await api.post('/auth/verify',
+      { otp },
+      { withCredentials: true }
+    );
 
-    if (otp === VALID_OTP && pendingUser && pendingCompany) {
-      setUser(pendingUser);
-      setCompany(pendingCompany);
-      localStorage.setItem('hr-portal-user', JSON.stringify(pendingUser));
-      localStorage.setItem('hr-portal-company', JSON.stringify(pendingCompany));
-      setPendingEmail(null);
-      setPendingUser(null);
-      setPendingCompany(null);
-      return { success: true };
+    if (res.status === 200) {
+      return { success: true, message: res.data.message };
+    } else {
+      return { success: false, message: res.data.message, error: 'Invalid OTP' };
     }
-
-    return { success: false, error: 'Invalid OTP. Use 123456 for demo.' };
   };
 
   const completeOnboarding = (data: OnboardingData) => {

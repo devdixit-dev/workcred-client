@@ -14,11 +14,11 @@ export default function VerifyOtp() {
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    if (!pendingEmail) {
-      navigate('/register');
-    }
-  }, [pendingEmail, navigate]);
+  // useEffect(() => {
+  //   if (!pendingEmail) {
+  //     navigate('/register');
+  //   }
+  // }, [pendingEmail, navigate]);
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) {
@@ -68,6 +68,7 @@ export default function VerifyOtp() {
     setIsLoading(true);
 
     const result = await verifyOtp(otpString);
+    console.log(result);
 
     if (result.success) {
       toast({
@@ -78,7 +79,7 @@ export default function VerifyOtp() {
     } else {
       toast({
         title: 'Verification Failed',
-        description: result.error,
+        description: result.message,
         variant: 'destructive',
       });
       setOtp(['', '', '', '', '', '']);
