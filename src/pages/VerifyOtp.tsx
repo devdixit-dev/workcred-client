@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
-  const { verifyOtp, pendingEmail, isAuthenticated, company } = useAuth();
+  const { verifyOtp, pendingEmail } = useAuth();
   const { toast } = useToast();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,43 +53,50 @@ export default function VerifyOtp() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const otpString = otp.join('');
+    try {
+      e.preventDefault();
+      const otpString = otp.join('');
 
-    if (otpString.length !== 6) {
-      toast({
-        title: 'Invalid OTP',
-        description: 'Please enter all 6 digits.',
-        variant: 'destructive',
-      });
-      return;
-    }
+      if (otpString.length !== 6) {
+        toast({
+          title: 'Invalid OTP',
+          description: 'Please enter all 6 digits.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    setIsLoading(true);
+      setIsLoading(true);
 
-    const result = await verifyOtp(otpString);
-    console.log(result);
+      const result = await verifyOtp(otpString);
 
-    if (result.success) {
-      toast({
-        title: 'Verification Successful',
-        description: 'Your email has been verified. Please login to continue.',
-      });
-      navigate('/login');
-    } else {
-      toast({
-        title: 'Verification Failed',
-        description: result.message,
-        variant: 'destructive',
-      });
+      if (result.success) {
+        toast({
+          title: 'Verification Successful',
+          description: 'Your email has been verified. Please login to continue.',
+        });
+        navigate('/login');
+      }
+
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
+    catch (error) {
+      if (error.response) {
+        toast({
+          title: 'Verification Failed',
+          description: error.response.data.message,
+          variant: 'destructive',
+        });
+      }
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+      setIsLoading(false);
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = (e: React.FormEvent) => {
     toast({
       title: 'OTP Resent',
       description: 'A new verification code has been sent. (Demo: 123456)',
@@ -158,13 +165,6 @@ export default function VerifyOtp() {
               Back to Login
             </Button>
           </div>
-        </div>
-
-        {/* Demo Info */}
-        <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Demo OTP: <span className="font-mono font-bold text-primary text-lg">123456</span>
-          </p>
         </div>
       </div>
     </div>

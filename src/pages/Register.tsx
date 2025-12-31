@@ -24,52 +24,55 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    const data = {
-      companyName, companyContact, gstNumber, companyType,
-      contactPersonName, email, password
+      const data = {
+        companyName, companyContact, gstNumber, companyType,
+        contactPersonName, email, password
+      }
+
+      if (password !== confirmPassword) {
+        toast({
+          title: 'Password Mismatch',
+          description: 'Passwords do not match.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (password.length < 8) {
+        toast({
+          title: 'Weak Password',
+          description: 'Password must be at least 8 characters.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setIsLoading(true);
+
+      const result = await registerCompany(companyName, companyContact, gstNumber, companyType, contactPersonName, email, password)
+
+      if (result.success) {
+        toast({
+          title: 'Registration Successful',
+          description: 'Please verify your email with the OTP.',
+        });
+        navigate('/verify-otp');
+        setIsLoading(false);
+      }
     }
-
-    console.log(data);
-
-    if (password !== confirmPassword) {
-      toast({
-        title: 'Password Mismatch',
-        description: 'Passwords do not match.',
-        variant: 'destructive',
-      });
-      return;
+    catch (error) {
+      if (error.response) {
+        console.log(error.response);
+        toast({
+          title: 'Registration Failed',
+          description: error.response.data.message,
+          variant: 'destructive',
+        });
+      }
     }
-
-    if (password.length < 8) {
-      toast({
-        title: 'Weak Password',
-        description: 'Password must be at least 8 characters.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    const result = await registerCompany(companyName, companyContact, gstNumber, companyType, contactPersonName, email, password)
-
-    if (result.success) {
-      toast({
-        title: 'Registration Successful',
-        description: 'Please verify your email with the OTP.',
-      });
-      navigate('/verify-otp');
-    } else {
-      toast({
-        title: 'Registration Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
-    }
-
-    setIsLoading(false);
   };
 
   return (
@@ -218,11 +221,6 @@ export default function Register() {
             </Link>
           </div>
         </div>
-
-        {/* Info */}
-        <p className="text-xs text-muted-foreground text-center">
-          OTP for verification: <span className="font-mono font-medium text-primary">123456</span>
-        </p>
       </div>
     </div>
   );
