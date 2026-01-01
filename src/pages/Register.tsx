@@ -72,6 +72,7 @@ export default function Register() {
           variant: 'destructive',
         });
       }
+      setIsLoading(false);
     }
   };
 

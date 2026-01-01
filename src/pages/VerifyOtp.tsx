@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
-  const { verifyOtp, pendingEmail } = useAuth();
+  const { verifyOtp, pendingEmail, resendVerification } = useAuth();
   const { toast } = useToast();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,11 +96,28 @@ export default function VerifyOtp() {
     }
   };
 
-  const handleResend = (e: React.FormEvent) => {
-    toast({
-      title: 'OTP Resent',
-      description: 'A new verification code has been sent. (Demo: 123456)',
-    });
+  const handleResend = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+
+      const result = await resendVerification();
+
+      if (result.success) {
+        toast({
+          title: 'OTP Resent',
+          description: 'A new verification code has been sent on email',
+        });
+      }
+    }
+    catch (error) {
+      if (error.response) {
+        toast({
+          title: 'Sending Verification Failed',
+          description: error.response.data.message,
+          variant: 'destructive'
+        });
+      }
+    }
   };
 
   return (

@@ -1,6 +1,5 @@
 import api from '@/api/axios.api';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -45,6 +44,8 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
+
+  resendVerification: () => Promise<{ success: boolean; error?: string; }>
 
   loginCompany: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOtp?: boolean }>;
   loginEmployee: (employeeId: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
 
-    const res = await api.post('/auth/init',
+    await api.post('/auth/init',
       {
         companyName, companyType, companyGSTnumber: gstNumber, companyAdmin: contactPersonName,
         companyContact, companyEmail: email, companyPassword: password
@@ -125,6 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return { success: true };
   };
+
+  const resendVerification = async () => {
+    await api.post('/auth/resend-verification', {}, { withCredentials: true });
+    return { success: true }
+  }
 
   const loginCompany = async (email: string, password: string): Promise<{ success: boolean; error?: string; requiresOtp?: boolean }> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -276,6 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: user?.role === 'admin',
         pendingEmail,
         registerCompany,
+        resendVerification,
         loginCompany,
         loginEmployee,
         verifyOtp,
