@@ -12,47 +12,60 @@ export default function Login() {
   const navigate = useNavigate();
   const { loginCompany, loginEmployee } = useAuth();
   const { toast } = useToast();
-  
+
   // Company login state
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyPassword, setCompanyPassword] = useState('');
   const [showCompanyPassword, setShowCompanyPassword] = useState(false);
-  
+
   // Employee login state
-  const [employeeId, setEmployeeId] = useState('');
+  const [empEmail, setEmpEmail] = useState('');
   const [employeePassword, setEmployeePassword] = useState('');
   const [showEmployeePassword, setShowEmployeePassword] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCompanyLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+    try {
+      e.preventDefault();
+      setIsLoading(true);
 
-    const result = await loginCompany(companyEmail, companyPassword);
+      const result = await loginCompany(companyEmail, companyPassword, 'Admin');
 
-    if (result.success && result.requiresOtp) {
-      toast({
-        title: 'OTP Sent',
-        description: 'Please enter the verification code.',
-      });
-      navigate('/verify-otp');
-    } else if (!result.success) {
-      toast({
-        title: 'Login Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
+      if (result.success) {
+        toast({
+          title: 'Login Successfully',
+          description: 'Logged in successfully. Setup your onboarding',
+        });
+        navigate('/onboarding');
+      } else if (!result.success) {
+        setIsLoading(false);
+        toast({
+          title: 'Login Failed',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
+    catch (error) {
+      if(error.response) {
+        setIsLoading(false);
+        toast({
+          title: 'Login Failed',
+          description: error.response.data.message,
+          variant: 'destructive',
+        });
+      }
+    }
   };
 
   const handleEmployeeLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await loginEmployee(employeeId, employeePassword);
+    const result = await loginEmployee(empEmail, employeePassword, 'User');
 
     if (result.success) {
       toast({
@@ -69,16 +82,6 @@ export default function Login() {
     }
 
     setIsLoading(false);
-  };
-
-  const fillCompanyDemo = () => {
-    setCompanyEmail('admin@techcorp.com');
-    setCompanyPassword('admin123');
-  };
-
-  const fillEmployeeDemo = () => {
-    setEmployeeId('EMP001');
-    setEmployeePassword('emp123');
   };
 
   return (
@@ -155,33 +158,19 @@ export default function Login() {
                   </Link>
                 </div>
               </form>
-
-              <div className="mt-4 pt-4 border-t border-border">
-                <button
-                  type="button"
-                  onClick={fillCompanyDemo}
-                  className="w-full flex items-center justify-between rounded-lg border border-border p-3 text-left hover:bg-secondary/50 hr-transition"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Demo Company</p>
-                    <p className="text-xs text-muted-foreground">admin@techcorp.com</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">admin123</span>
-                </button>
-              </div>
             </TabsContent>
 
             {/* Employee Login */}
             <TabsContent value="employee">
               <form onSubmit={handleEmployeeLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="employee-id">Employee ID</Label>
+                  <Label htmlFor="employee-id">Email</Label>
                   <Input
-                    id="employee-id"
+                    id="email"
                     type="text"
-                    placeholder="EMP001"
-                    value={employeeId}
-                    onChange={(e) => setEmployeeId(e.target.value.toUpperCase())}
+                    placeholder="user@gmail.com"
+                    value={empEmail}
+                    onChange={(e) => setEmpEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -217,27 +206,10 @@ export default function Login() {
                 </p>
               </form>
 
-              <div className="mt-4 pt-4 border-t border-border">
-                <button
-                  type="button"
-                  onClick={fillEmployeeDemo}
-                  className="w-full flex items-center justify-between rounded-lg border border-border p-3 text-left hover:bg-secondary/50 hr-transition"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Demo Employee</p>
-                    <p className="text-xs text-muted-foreground">EMP001 - Rajesh Kumar</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">emp123</span>
-                </button>
-              </div>
+
             </TabsContent>
           </Tabs>
         </div>
-
-        {/* OTP Info */}
-        <p className="text-xs text-muted-foreground text-center">
-          Company login OTP: <span className="font-mono font-medium text-primary">123456</span>
-        </p>
       </div>
     </div>
   );

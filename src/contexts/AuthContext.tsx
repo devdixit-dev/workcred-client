@@ -47,8 +47,8 @@ interface AuthContextType {
 
   resendVerification: () => Promise<{ success: boolean; error?: string; }>
 
-  loginCompany: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOtp?: boolean }>;
-  loginEmployee: (employeeId: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginCompany: (email: string, password: string, role: string) => Promise<{ success: boolean; error?: string }>;
+  loginEmployee: (employeeId: string, password: string, role: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (otp: string) => Promise<{ success: boolean; message: string; error?: string }>;
   completeOnboarding: (data: OnboardingData) => void;
   updateProfile: (data: Partial<User>) => void;
@@ -83,8 +83,6 @@ const DEMO_EMPLOYEES = [
   { id: 'emp002', employeeId: 'EMP002', password: 'emp123', name: 'Priya Sharma', companyId: 'company-1', department: 'Engineering', designation: 'Senior Software Engineer', email: 'priya.sharma@company.com', phone: '+91 98765 43211' },
   { id: 'emp003', employeeId: 'EMP003', password: 'emp123', name: 'Amit Patel', companyId: 'company-1', department: 'Engineering', designation: 'Software Engineer', email: 'amit.patel@company.com', phone: '+91 98765 43212' },
 ];
-
-const VALID_OTP = '123456';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -132,75 +130,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true }
   }
 
-  const loginCompany = async (email: string, password: string): Promise<{ success: boolean; error?: string; requiresOtp?: boolean }> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  const loginCompany = async (email: string, password: string, role: string): Promise<{ success: boolean; error?: string; }> => {
+    const res = await api.post('/auth/signin', { email, password, role }, { withCredentials: true });
 
-    const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
-    const allCompanies = [...DEMO_COMPANIES, ...registeredCompanies];
-    const companyData = allCompanies.find((c) => c.email === email && c.password === password);
-
-    if (companyData) {
-      setPendingEmail(email);
-      setPendingUser({ id: companyData.id, email: companyData.email, name: companyData.name, role: 'admin' });
-      setPendingCompany({
-        id: companyData.id,
-        name: companyData.name,
-        email: companyData.email,
-        logo: companyData.logo,
-        website: companyData.website,
-        workingHours: companyData.workingHours,
-        isOnboarded: companyData.isOnboarded,
-      });
-      return { success: true, requiresOtp: true };
+    if (res.status === 200) {
+      return { success: true }
+    } else {
+      return { success: false, error: 'Invalid email or password' }
     }
-
-    return { success: false, error: 'Invalid email or password' };
   };
 
-  const loginEmployee = async (employeeId: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  const loginEmployee = async (email: string, password: string, role: string): Promise<{ success: boolean; error?: string }> => {
+    const res = await api.post('/auth/signin', { email, password, role }, { withCredentials: true });
 
-    const registeredEmployees = JSON.parse(localStorage.getItem('hr-portal-employees') || '[]');
-    const allEmployees = [...DEMO_EMPLOYEES, ...registeredEmployees];
-    const employee = allEmployees.find((e) => e.employeeId === employeeId && e.password === password);
-
-    if (employee) {
-      const userData: User = {
-        id: employee.id,
-        email: employee.email || '',
-        name: employee.name,
-        role: 'employee',
-        companyId: employee.companyId,
-        employeeId: employee.employeeId,
-        department: employee.department,
-        designation: employee.designation,
-        phone: employee.phone,
-      };
-      setUser(userData);
-      localStorage.setItem('hr-portal-user', JSON.stringify(userData));
-
-      // Load company data for employee
-      const registeredCompanies = JSON.parse(localStorage.getItem('hr-portal-companies') || '[]');
-      const allCompanies = [...DEMO_COMPANIES, ...registeredCompanies];
-      const companyData = allCompanies.find((c) => c.id === employee.companyId);
-      if (companyData) {
-        const companyInfo: Company = {
-          id: companyData.id,
-          name: companyData.name,
-          email: companyData.email,
-          logo: companyData.logo,
-          website: companyData.website,
-          workingHours: companyData.workingHours,
-          isOnboarded: true,
-        };
-        setCompany(companyInfo);
-        localStorage.setItem('hr-portal-company', JSON.stringify(companyInfo));
-      }
-
-      return { success: true };
+    if (res.status === 200) {
+      return { success: true }
+    } else {
+      return { success: false, error: 'Invalid email or password' }
     }
-
-    return { success: false, error: 'Invalid Employee ID or password' };
   };
 
   const verifyOtp = async (otp: string): Promise<{ success: boolean; message: string; error?: string }> => {
