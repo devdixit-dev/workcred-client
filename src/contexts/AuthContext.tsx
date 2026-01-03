@@ -64,33 +64,12 @@ interface OnboardingData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo credentials
-const DEMO_COMPANIES = [
-  {
-    id: 'company-1',
-    email: 'admin@techcorp.com',
-    password: 'admin123',
-    name: 'TechCorp Solutions',
-    logo: '',
-    website: 'https://techcorp.com',
-    workingHours: { start: '09:00', end: '18:00' },
-    isOnboarded: true
-  },
-];
-
-const DEMO_EMPLOYEES = [
-  { id: 'emp001', employeeId: 'EMP001', password: 'emp123', name: 'Rajesh Kumar', companyId: 'company-1', department: 'Engineering', designation: 'Engineering Manager', email: 'rajesh.kumar@company.com', phone: '+91 98765 43210' },
-  { id: 'emp002', employeeId: 'EMP002', password: 'emp123', name: 'Priya Sharma', companyId: 'company-1', department: 'Engineering', designation: 'Senior Software Engineer', email: 'priya.sharma@company.com', phone: '+91 98765 43211' },
-  { id: 'emp003', employeeId: 'EMP003', password: 'emp123', name: 'Amit Patel', companyId: 'company-1', department: 'Engineering', designation: 'Software Engineer', email: 'amit.patel@company.com', phone: '+91 98765 43212' },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isAuth, setIsAuth] = useState(false)
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [pendingUser, setPendingUser] = useState<User | null>(null);
-  const [pendingCompany, setPendingCompany] = useState<Company | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('hr-portal-user');
@@ -163,6 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isAuthVerified = async () => {
+    const res = await api.get('/is-token', {withCredentials: true});
+    return res.status === 200 ? setIsAuth(true) : setIsAuth(true)
+  }
+
   const completeOnboarding = (data: OnboardingData) => {
     if (!company) return;
 
@@ -213,8 +197,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setCompany(null);
     setPendingEmail(null);
-    setPendingUser(null);
-    setPendingCompany(null);
     localStorage.removeItem('hr-portal-user');
     localStorage.removeItem('hr-portal-company');
   };
@@ -224,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         company,
-        isAuthenticated: !!user,
+        isAuthenticated: isAuth,
         isLoading,
         isAdmin: user?.role === 'admin',
         pendingEmail,
