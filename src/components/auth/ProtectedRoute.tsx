@@ -6,7 +6,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user, company } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,11 +22,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // Redirect admin users to onboarding if not completed
-  if (user?.role === 'admin' && company && !company.isOnboarded && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;

@@ -32,7 +32,7 @@ interface AuthContextType {
   company: Company | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  isAdmin: boolean;
+  // isAdmin: boolean;
   pendingEmail: string | null;
 
   registerCompany: (
@@ -46,7 +46,6 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; error?: string }>;
 
   resendVerification: () => Promise<{ success: boolean; error?: string; }>
-
   loginCompany: (email: string, password: string, role: string) => Promise<{ success: boolean; error?: string }>;
   loginEmployee: (employeeId: string, password: string, role: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (otp: string) => Promise<{ success: boolean; message: string; error?: string }>;
@@ -112,7 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginCompany = async (email: string, password: string, role: string): Promise<{ success: boolean; error?: string; }> => {
     const res = await api.post('/auth/signin', { email, password, role }, { withCredentials: true });
 
-    if (res.status === 200) {
+    if (res.status === 200 && role === 'Admin') {
+      setIsAuth(true);
       return { success: true }
     } else {
       return { success: false, error: 'Invalid email or password' }
@@ -141,11 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: res.data.message, error: 'Invalid OTP' };
     }
   };
-
-  const isAuthVerified = async () => {
-    const res = await api.get('/is-token', {withCredentials: true});
-    return res.status === 200 ? setIsAuth(true) : setIsAuth(true)
-  }
 
   const completeOnboarding = (data: OnboardingData) => {
     if (!company) return;
@@ -208,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         company,
         isAuthenticated: isAuth,
         isLoading,
-        isAdmin: user?.role === 'admin',
+        // isAdmin: user?.role === 'admin',
         pendingEmail,
         registerCompany,
         resendVerification,
