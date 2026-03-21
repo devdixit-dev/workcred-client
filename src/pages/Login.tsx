@@ -72,7 +72,7 @@ export default function Login() {
         title: 'Welcome!',
         description: 'You have successfully logged in.',
       });
-      navigate('/');
+      navigate('/dashboard');
     } else {
       toast({
         title: 'Login Failed',

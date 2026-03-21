@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, UserPlus, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,39 @@ import {
 } from '@/components/ui/select';
 import { EmployeeCard } from '@/components/employees/EmployeeCard';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
-import { employees, departments } from '@/data/sampleData';
+import { departments } from '@/data/sampleData';
 import { cn } from '@/lib/utils';
+import api from '@/api/axios.api';
+import { Employee } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Employees() {
+  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await api.get('/admin/employees', { notifyError: false });
+        setEmployees(res.data.data || []);
+      } catch (error: any) {
+        toast({
+          title: 'Unable to fetch employees',
+          description: error?.response?.data?.message || 'Please try again later.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, [toast]);
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -128,18 +153,22 @@ export default function Employees() {
         Showing {filteredEmployees.length} of {employees.length} employees
       </p>
 
+      {isLoading && (
+        <div className="text-sm text-muted-foreground">Loading employees...</div>
+      )}
+
       {/* Employee Grid/List */}
-      {viewMode === 'grid' ? (
+      {!isLoading && viewMode === 'grid' ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEmployees.map((employee) => (
             <EmployeeCard key={employee.id} employee={employee} />
           ))}
         </div>
       ) : (
-        <EmployeeTable employees={filteredEmployees} />
+        !isLoading && <EmployeeTable employees={filteredEmployees} />
       )}
 
-      {filteredEmployees.length === 0 && (
+      {!isLoading && filteredEmployees.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-full bg-muted p-4 mb-4">
             <Search className="h-8 w-8 text-muted-foreground" />

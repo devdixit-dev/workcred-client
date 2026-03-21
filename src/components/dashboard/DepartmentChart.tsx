@@ -6,7 +6,8 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { departments } from '@/data/sampleData';
+import { useEffect, useState } from 'react';
+import api from '@/api/axios.api';
 
 const COLORS = [
   'hsl(217, 91%, 60%)',
@@ -17,12 +18,18 @@ const COLORS = [
   'hsl(180, 70%, 45%)',
 ];
 
-const data = departments.map((dept) => ({
-  name: dept.name,
-  value: dept.employeeCount,
-}));
-
 export function DepartmentChart() {
+  const [data, setData] = useState<{ name: string; value: number }[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await api.get('/admin/dashboard');
+      setData((res.data.data.departments || []).map((d: any) => ({ name: d.name, value: d.value })));
+    };
+
+    load();
+  }, []);
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 hr-shadow-card animate-slide-up">
       <div className="mb-6">
@@ -32,15 +39,7 @@ export function DepartmentChart() {
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-            >
+            <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value">
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
@@ -57,9 +56,7 @@ export function DepartmentChart() {
             <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={(value) => (
-                <span className="text-sm text-muted-foreground">{value}</span>
-              )}
+              formatter={(value) => <span className="text-sm text-muted-foreground">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>

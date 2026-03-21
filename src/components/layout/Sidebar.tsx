@@ -28,7 +28,7 @@ interface NavItem {
 }
 
 const adminNavigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
   {
     name: 'Employees',
     href: '/employees',
@@ -67,7 +67,7 @@ const adminNavigation: NavItem[] = [
 ];
 
 const employeeNavigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'My Profile', href: '/profile', icon: User },
   { name: 'My Attendance', href: '/my-attendance', icon: Clock },
   {
@@ -108,7 +108,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   };
 
   const isActive = (href: string) => {
-    if (href === '/') return location.pathname === '/';
+    if (href === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(href);
   };
 

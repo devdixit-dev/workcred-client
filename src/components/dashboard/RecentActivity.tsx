@@ -7,9 +7,10 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { activities } from '@/data/sampleData';
+import { useEffect, useState } from 'react';
+import api from '@/api/axios.api';
 
-const typeIcons = {
+const typeIcons: Record<string, any> = {
   leave: Palmtree,
   attendance: Calendar,
   payroll: DollarSign,
@@ -17,7 +18,7 @@ const typeIcons = {
   announcement: Megaphone,
 };
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   leave: 'bg-warning/10 text-warning',
   attendance: 'bg-primary/10 text-primary',
   payroll: 'bg-success/10 text-success',
@@ -26,6 +27,17 @@ const typeColors = {
 };
 
 export function RecentActivity() {
+  const [activities, setActivities] = useState<any[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await api.get('/admin/dashboard');
+      setActivities(res.data.data.recentActivities || []);
+    };
+
+    load();
+  }, []);
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 hr-shadow-card animate-slide-up">
       <div className="mb-6">
@@ -34,22 +46,17 @@ export function RecentActivity() {
       </div>
       <div className="space-y-4">
         {activities.slice(0, 5).map((activity) => {
-          const Icon = typeIcons[activity.type];
-          const colorClass = typeColors[activity.type];
+          const Icon = typeIcons[activity.type] || Megaphone;
+          const colorClass = typeColors[activity.type] || typeColors.announcement;
 
           return (
-            <div
-              key={activity.id}
-              className="flex items-start gap-4 rounded-lg p-3 hr-transition hover:bg-secondary/50"
-            >
+            <div key={activity.id} className="flex items-start gap-4 rounded-lg p-3 hr-transition hover:bg-secondary/50">
               <div className={cn('rounded-lg p-2', colorClass)}>
                 <Icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">{activity.title}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {activity.description}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{activity.description}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </p>

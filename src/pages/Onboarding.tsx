@@ -44,6 +44,7 @@ export default function Onboarding() {
   const { completeOnboarding, company } = useAuth();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Step 1: Employees
@@ -117,28 +118,46 @@ export default function Onboarding() {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleComplete = () => {
-    const validEmployees = employees.filter(e => e.employeeId && e.firstName && e.lastName);
-    
-    completeOnboarding({
-      employees: validEmployees,
-      workingHours: { start: startTime, end: endTime },
-      companyDetails: { logo, website },
-    });
+  const handleComplete = async () => {
+    try {
+      setIsSaving(true);
+      const validEmployees = employees.filter((e) => e.employeeId && e.firstName && e.lastName);
 
-    toast({
-      title: 'Setup Complete!',
-      description: 'Your HR Portal is ready to use.',
-    });
+      const result = await completeOnboarding({
+        employees: validEmployees,
+        workingHours: { start: startTime, end: endTime },
+        companyDetails: { logo, website },
+      });
 
-    navigate('/');
+      if (!result.success) {
+        toast({
+          title: 'Setup Failed',
+          description: result.error || 'Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Setup Complete!',
+        description: 'Your HR Portal is ready to use.',
+      });
+
+      navigate('/dashboard');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSkip = () => {
-    completeOnboarding({
+  const handleSkip = async () => {
+    await completeOnboarding({
       workingHours: { start: startTime, end: endTime },
     });
-    navigate('/');
+    toast({
+      title: 'Onboarding Saved',
+      description: 'Working hours have been saved successfully.',
+    });
+    navigate('/dashboard');
   };
 
   return (
@@ -408,9 +427,9 @@ export default function Onboarding() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleComplete} className="hr-gradient">
+              <Button onClick={handleComplete} className="hr-gradient" disabled={isSaving}>
                 <Check className="mr-2 h-4 w-4" />
-                Complete Setup
+                {isSaving ? 'Saving...' : 'Complete Setup'}
               </Button>
             )}
           </div>

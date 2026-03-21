@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Users, Calendar, Palmtree, DollarSign } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { AttendanceChart } from '@/components/dashboard/AttendanceChart';
@@ -5,22 +6,28 @@ import { DepartmentChart } from '@/components/dashboard/DepartmentChart';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-import { employees, leaves, attendance } from '@/data/sampleData';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/api/axios.api';
 
 export default function Dashboard() {
   const { isAdmin, user } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
-  const todayAttendance = attendance.filter(
-    (a) => a.date === today && a.status === 'present'
-  );
-  const pendingLeaves = leaves.filter((l) => l.status === 'pending');
-  const totalPayroll = employees.reduce((sum, emp) => {
-    const gross = emp.salary.basic + emp.salary.hra + emp.salary.da + emp.salary.allowances;
-    return sum + gross;
-  }, 0);
+  const [data, setData] = useState<any>(null);
 
-  // Employee Dashboard - simplified view
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const endpoint = isAdmin ? '/admin/dashboard' : '/user/dashboard';
+      const res = await api.get(endpoint);
+      setData(res.data.data);
+    };
+
+    fetchDashboard();
+  }, [isAdmin]);
+
+  const monthlyPayrollLakhs = useMemo(
+    () => Number((Number(data?.monthlyPayroll || 0) / 100000).toFixed(1)),
+    [data?.monthlyPayroll]
+  );
+
   if (!isAdmin) {
     return (
       <div className="space-y-6">
@@ -30,29 +37,24 @@ export default function Dashboard() {
         </div>
 
         <QuickActions />
-
         <UpcomingEvents />
       </div>
     );
   }
 
-  // Admin Dashboard - full view
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="animate-fade-in">
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">Welcome to HR Portal. Here's what's happening today.</p>
       </div>
 
-      {/* Quick Actions */}
       <QuickActions />
 
-      {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Employees"
-          value={employees.length}
+          value={data?.totalEmployees || 0}
           subtitle="Active workforce"
           icon={Users}
           variant="primary"
@@ -60,34 +62,32 @@ export default function Dashboard() {
         />
         <StatCard
           title="Present Today"
-          value={todayAttendance.length}
-          subtitle={`Out of ${employees.length}`}
+          value={data?.presentToday || 0}
+          subtitle={`Out of ${data?.totalEmployees || 0}`}
           icon={Calendar}
           variant="success"
         />
         <StatCard
           title="Pending Leaves"
-          value={pendingLeaves.length}
+          value={data?.pendingLeaves || 0}
           subtitle="Awaiting approval"
           icon={Palmtree}
           variant="warning"
         />
         <StatCard
           title="Monthly Payroll"
-          value={`₹${(totalPayroll / 100000).toFixed(1)}L`}
+          value={`INR ${monthlyPayrollLakhs}L`}
           subtitle="Gross salary"
           icon={DollarSign}
           variant="default"
         />
       </div>
 
-      {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
         <AttendanceChart />
         <DepartmentChart />
       </div>
 
-      {/* Activity & Events Row */}
       <div className="grid gap-6 lg:grid-cols-2">
         <RecentActivity />
         <UpcomingEvents />

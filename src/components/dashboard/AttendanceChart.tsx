@@ -7,18 +7,26 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-const data = [
-  { day: 'Mon', present: 18, absent: 2 },
-  { day: 'Tue', present: 19, absent: 1 },
-  { day: 'Wed', present: 17, absent: 3 },
-  { day: 'Thu', present: 20, absent: 0 },
-  { day: 'Fri', present: 16, absent: 4 },
-  { day: 'Sat', present: 0, absent: 0 },
-  { day: 'Sun', present: 0, absent: 0 },
-];
+import { useEffect, useState } from 'react';
+import api from '@/api/axios.api';
 
 export function AttendanceChart() {
+  const [data, setData] = useState<{ day: string; present: number; absent: number }[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await api.get('/admin/dashboard');
+      const rows = (res.data.data.weeklyAttendance || []).map((w: any) => ({
+        day: String(w.day).slice(5),
+        present: Number(w.present || 0),
+        absent: Number(w.absent || 0),
+      }));
+      setData(rows);
+    };
+
+    load();
+  }, []);
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 hr-shadow-card animate-slide-up">
       <div className="mb-6">
@@ -35,17 +43,8 @@ export function AttendanceChart() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-            <XAxis
-              dataKey="day"
-              tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(220, 13%, 91%)' }}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(220, 13%, 91%)' }}
-              tickLine={false}
-            />
+            <XAxis dataKey="day" tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 12 }} axisLine={{ stroke: 'hsl(220, 13%, 91%)' }} tickLine={false} />
+            <YAxis tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 12 }} axisLine={{ stroke: 'hsl(220, 13%, 91%)' }} tickLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(0, 0%, 100%)',
@@ -55,14 +54,7 @@ export function AttendanceChart() {
               }}
               labelStyle={{ color: 'hsl(220, 13%, 9%)', fontWeight: 600 }}
             />
-            <Area
-              type="monotone"
-              dataKey="present"
-              stroke="hsl(217, 91%, 60%)"
-              strokeWidth={2}
-              fill="url(#presentGradient)"
-              name="Present"
-            />
+            <Area type="monotone" dataKey="present" stroke="hsl(217, 91%, 60%)" strokeWidth={2} fill="url(#presentGradient)" name="Present" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
